@@ -1,0 +1,39 @@
+{
+  "slug": "bmi-keisan",
+  "title": "BMI計算機｜身長と体重から肥満度をチェック",
+  "h1": "BMI計算機",
+  "description": "身長と体重を入力するだけで、BMI（体格指数）と標準体重を自動計算します。",
+  "inputs": [
+    {
+      "id": "height",
+      "label": "身長（cm）",
+      "default": 165
+    },
+    {
+      "id": "weight",
+      "label": "体重（kg）",
+      "default": 60
+    }
+  ],
+  "outputs": [
+    {
+      "label": "BMI値",
+      "expr": "weight / ((height / 100) * (height / 100))",
+      "unit": "",
+      "digits": 1
+    },
+    {
+      "label": "標準体重（BMI22）",
+      "expr": "22 * (height / 100) * (height / 100)",
+      "unit": "kg",
+      "digits": 1
+    },
+    {
+      "label": "標準体重との差",
+      "expr": "weight - 22 * (height / 100) * (height / 100)",
+      "unit": "kg",
+      "digits": 1
+    }
+  ],
+  "article": "BMIは「体重(kg)÷身長(m)の2乗」で求められる、世界共通の肥満度指数です。日本肥満学会ではBMI22が最も病気になりにくい標準体重とされています。例えば身長165cm・体重60kgの場合、BMIは約22.0で標準体重は約59.9kg、ほぼ理想的な数値です。BMI25以上は肥満、18.5未満は低体重の目安とされます。ダイエットや健康管理の目標設定に、まず自分のBMIと標準体重を知ることから始めてみましょう。"
+}
