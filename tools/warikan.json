@@ -1,0 +1,17 @@
+{
+  "slug": "warikan",
+  "title": "割り勘計算機｜端数も幹事負担もすぐわかる",
+  "h1": "割り勘計算機",
+  "description": "合計金額と人数から、1人あたりの支払額と端数を計算します。",
+  "inputs": [
+    {"id": "total", "label": "合計金額（円）", "default": 23800},
+    {"id": "people", "label": "人数", "default": 6},
+    {"id": "unit", "label": "集める単位（円）", "default": 100}
+  ],
+  "outputs": [
+    {"label": "1人あたり（切り上げ）", "expr": "Math.ceil(total / people / unit) * unit", "unit": "円", "digits": 0},
+    {"label": "集まる合計", "expr": "Math.ceil(total / people / unit) * unit * people", "unit": "円", "digits": 0},
+    {"label": "余り（お釣り）", "expr": "Math.ceil(total / people / unit) * unit * people - total", "unit": "円", "digits": 0}
+  ],
+  "article": "飲み会や旅行の支払いを人数で割るとき、1円単位だと集金が大変です。この計算機は100円単位などに切り上げて、1人あたりの金額と余りを同時に出します。余りは次回の会費に回したり、幹事の手間賃にしたりと使い道を決めておくとスムーズです。"
+}
