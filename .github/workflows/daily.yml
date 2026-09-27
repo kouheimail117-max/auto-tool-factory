@@ -1,0 +1,41 @@
+name: 毎日ツールを追加して公開
+
+on:
+  schedule:
+    - cron: "0 21 * * *"   # 毎朝6時（日本時間）
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 新しいツールをAIで追加（定期実行時のみ）
+        if: github.event_name != 'push'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python generator/grow.py
+      - name: 追加分をリポジトリに保存
+        run: |
+          git config user.name "tool-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add tools/
+          git diff --cached --quiet || (git commit -m "ツールを自動追加" && git push)
+      - name: サイトを生成
+        run: python generator/build.py
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - uses: actions/deploy-pages@v4
