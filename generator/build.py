@@ -17,24 +17,45 @@ def ad_tag():
             "<script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>")
 
 CSS = """
-:root{--bg:#f3f5f8;--ink:#1b1f2a;--sub:#5b6272;--ai:#1f2d4f;--ok:#2f8a64;--line:#c6ccd6;--field:#fff}
-@media (prefers-color-scheme:dark){:root{--bg:#141925;--ink:#eef1f6;--sub:#a3abbb;--ai:#9fb4e6;--ok:#5cc496;--line:#343c4f;--field:#1c2231}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;line-height:1.8}
-main{max-width:34rem;margin:0 auto;padding:2rem 1.25rem 3rem}h1{color:var(--ai);font-size:1.9rem;line-height:1.3}
-label{display:block;font-weight:700;margin:1rem 0 .3rem}input{font:inherit;font-size:1.15rem;width:100%;padding:.6rem;border:1px solid var(--line);border-radius:.5rem;background:var(--field);color:var(--ink)}
-dl{display:grid;grid-template-columns:1fr auto;gap:.6rem 1rem;margin:2rem 0;padding:1rem 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-dt{color:var(--sub)}dd{margin:0;font-weight:700;font-size:1.25rem;color:var(--ok);text-align:right}
-a{color:var(--ai)}.ad{min-height:6rem;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:.85rem;margin:2rem 0}
+:root{--bg:#fff8e7;--ink:#4a3420;--sub:#8a6a4a;--ai:#e0670f;--ok:#b54a0c;--line:#f2d79b;--field:#fff;--card:#fff;--sun:#ffe08a;--sunink:#6b4100}
+@media (prefers-color-scheme:dark){:root{--bg:#231b13;--ink:#fbeedd;--sub:#cdb497;--ai:#ffad55;--ok:#ffc56e;--line:#54412c;--field:#2e2419;--card:#2b2117;--sun:#4a3618;--sunink:#ffe3a3}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;line-height:1.8}
+header{background:var(--sun);padding:.8rem 1.25rem;border-radius:0 0 1.5rem 1.5rem}
+header a{color:var(--sunink);text-decoration:none;font-weight:700;font-size:1.1rem}
+main{max-width:34rem;margin:0 auto;padding:1.5rem 1.25rem 3rem}
+.card{background:var(--card);border:2px solid var(--line);border-radius:1.5rem;padding:.5rem 1.25rem 1.5rem;margin:1rem 0}
+h1{color:var(--ai);font-size:1.7rem;line-height:1.35;margin:.2rem 0 .6rem}
+h2{color:var(--ai);font-size:1.25rem;margin-top:2rem}
+h2::before{content:"☀ "}
+label{display:block;font-weight:700;margin:1rem 0 .3rem}
+input{font:inherit;font-size:1.15rem;width:100%;padding:.65rem 1.1rem;border:2px solid var(--line);border-radius:999px;background:var(--field);color:var(--ink);outline:none}
+input:focus{border-color:var(--ai)}
+dl{display:grid;grid-template-columns:1fr auto;gap:.6rem 1rem;margin:1.5rem 0 0;padding:1rem 1.25rem;background:var(--sun);border-radius:1.25rem}
+dt{color:var(--sunink)}dd{margin:0;font-weight:700;font-size:1.3rem;color:var(--ok);text-align:right}
+a{color:var(--ai)}
+ul.tools{list-style:none;padding:0;display:grid;gap:.8rem}
+ul.tools li{background:var(--card);border:2px solid var(--line);border-radius:1.25rem;padding:.9rem 1.1rem}
+ul.tools a{font-weight:700;text-decoration:none;font-size:1.1rem}
+ul.tools small{color:var(--sub)}
+.ad{min-height:6rem;border:2px dashed var(--line);border-radius:1.25rem;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:.85rem;margin:2rem 0}
+.back{display:inline-block;background:var(--ai);color:var(--bg);padding:.5rem 1.4rem;border-radius:999px;text-decoration:none;font-weight:700}
 """
 
+FONTS = ("<link rel='preconnect' href='https://fonts.googleapis.com'>"
+         "<link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>"
+         "<link href='https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap' rel='stylesheet'>")
+
 def page(title, desc, body, path):
-    url = site["base_url"].rstrip("/") + "/" + path
+    base = site["base_url"].rstrip("/")
+    url = base + "/" + path
     return f"""<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(title)}</title>
 <meta name="description" content="{e(desc)}"><link rel="canonical" href="{e(url)}">
 <meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}">
-<style>{CSS}</style></head><body><main>{body}
-<p><a href="{e(site["base_url"].rstrip("/"))}/">{e(site["site_name"])} トップへ</a></p></main></body></html>"""
+{FONTS}<style>{CSS}</style></head><body>
+<header><a href="{e(base)}/">☀ {e(site["site_name"])}</a></header><main>{body}
+<p><a class="back" href="{e(base)}/">トップへもどる</a></p></main></body></html>"""
 
 def tool_page(t):
     inputs = "".join(f"<label for='{e(i['id'])}'>{e(i['label'])}</label>"
@@ -48,7 +69,8 @@ function run(){{const v=ids.map(i=>parseFloat(document.getElementById(i).value)|
 F.forEach(([f,u,d],n)=>{{const r=f(...v);document.getElementById("o"+n).textContent=
 Number.isFinite(r)?r.toLocaleString("ja-JP",{{minimumFractionDigits:d,maximumFractionDigits:d}})+" "+u:"–";}});}}
 ids.forEach(i=>document.getElementById(i).addEventListener("input",run));run();</script>"""
-    body = (f"<h1>{e(t['h1'])}</h1><p>{e(t['description'])}</p>{inputs}<dl>{outs}</dl>"
+    body = (f"<h1>{e(t['h1'])}</h1><p>{e(t['description'])}</p>"
+            f"<div class='card'>{inputs}<dl>{outs}</dl></div>"
             f"{ad_tag()}<h2>解説</h2><p>{e(t['article'])}</p>{js}")
     return page(t["title"], t["description"], body, f"{t['slug']}/")
 
@@ -65,7 +87,7 @@ def main():
         (DIST / t["slug"] / "index.html").write_text(tool_page(t), encoding="utf-8")
         tools.append(t)
     items = "".join(f"<li><a href='{e(t['slug'])}/'>{e(t['h1'])}</a><br><small>{e(t['description'])}</small></li>" for t in tools)
-    idx = f"<h1>{e(site['site_name'])}</h1><p>毎日の「いくら？」「何日？」をすぐ計算。</p><ul>{items}</ul>{ad_tag()}"
+    idx = f"<h1>{e(site['site_name'])}</h1><p>毎日の「いくら？」「何日？」をすぐ計算。</p><ul class='tools'>{items}</ul>{ad_tag()}"
     (DIST / "index.html").write_text(page(site["site_name"], "暮らしの計算ツール集", idx, ""), encoding="utf-8")
     today = datetime.date.today().isoformat()
     base = site["base_url"].rstrip("/")
