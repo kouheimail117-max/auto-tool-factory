@@ -43,3 +43,8 @@ jobs:
       - uses: actions/deploy-pages@v4
       - name: IndexNowに通知
         run: python scripts/seo.py ping
+      - name: Blueskyに投稿
+        env:
+          BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
+          BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
+        run: python scripts/bluesky.py
