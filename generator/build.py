@@ -41,6 +41,12 @@ HERO = ('<svg class="hero" viewBox="0 0 320 150" aria-hidden="true">'
         '<path d="M-5 18 L16 2 L37 18 Z" fill="#FFB65C" stroke="#E0670F" stroke-width="2" stroke-linejoin="round"/></g>'
         f'<g transform="translate(232 18) scale(0.62)">{SUN_BODY}</g></svg>')
 
+COUNTER = ('<p class="count" id="cnt" hidden>☀ これまでに <b id="cntn">-</b> 人がきてくれたよ</p>'
+           '<script>fetch("https://tally.yuki.sh/hits/kurashi-keisan/site.json")'
+           '.then(function(r){return r.json()}).then(function(d){'
+           'if(d&&d.visitor){document.getElementById("cntn").textContent=d.visitor.toLocaleString("ja-JP");'
+           'document.getElementById("cnt").hidden=false}}).catch(function(){})</script>')
+
 CSS = """
 :root{--bg:#fff8e7;--ink:#4a3420;--sub:#8a6a4a;--ai:#e0670f;--ok:#b54a0c;--line:#f2d79b;--field:#fff;--card:#fff;--sun:#ffe08a;--sunink:#6b4100}
 @media (prefers-color-scheme:dark){:root{--bg:#231b13;--ink:#fbeedd;--sub:#cdb497;--ai:#ffad55;--ok:#ffc56e;--line:#54412c;--field:#2e2419;--card:#2b2117;--sun:#4a3618;--sunink:#ffe3a3}}
@@ -67,6 +73,8 @@ ul.tools li{background:var(--card);border:2px solid var(--line);border-radius:1.
 ul.tools a{font-weight:700;text-decoration:none;font-size:1.1rem}
 ul.tools small{color:var(--sub)}
 .ad{min-height:6rem;border:2px dashed var(--line);border-radius:1.25rem;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:.85rem;margin:2rem 0}
+.count{text-align:center;background:var(--sun);color:var(--sunink);border-radius:999px;padding:.4rem 1rem;font-size:.95rem;margin:2rem 0 1rem}
+.count b{color:var(--ok);font-size:1.2rem}
 .back{display:inline-block;background:var(--ai);color:var(--bg);padding:.5rem 1.4rem;border-radius:999px;text-decoration:none;font-weight:700}
 """
 
@@ -83,6 +91,7 @@ def page(title, desc, body, path):
 <meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}">
 {FONTS}<style>{CSS}</style></head><body>
 <header><a href="{e(base)}/">{sun(40)}{e(site["site_name"])}</a></header><main>{body}
+{COUNTER}
 <p><a class="back" href="{e(base)}/">トップへもどる</a></p></main></body></html>"""
 
 def tool_page(t):
