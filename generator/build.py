@@ -47,6 +47,18 @@ COUNTER = ('<p class="count" id="cnt" hidden>☀ これまでに <b id="cntn">-<
            'if(d&&d.visitor){document.getElementById("cntn").textContent=d.visitor.toLocaleString("ja-JP");'
            'document.getElementById("cnt").hidden=false}}).catch(function(){})</script>')
 
+SEARCH_BOX = ("<div class='search'><label for='q'>☀ なにを計算したい？</label>"
+              "<input id='q' type='search' placeholder='例：電気代、貯金、時給' autocomplete='off'></div>")
+
+SEARCH_JS = ('<script>(function(){var q=document.getElementById("q"),'
+             'items=document.querySelectorAll("ul.tools li"),none=document.getElementById("none");'
+             'function kata(s){return s.replace(/[\\u30a1-\\u30f6]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-96)})}'
+             'function norm(s){return kata(s.normalize("NFKC").toLowerCase())}'
+             'items.forEach(function(li){li.dataset.n=norm(li.dataset.k||"")});'
+             'q.addEventListener("input",function(){var w=norm(q.value).split(/\\s+/).filter(Boolean),c=0;'
+             'items.forEach(function(li){var ok=w.every(function(x){return li.dataset.n.indexOf(x)>=0});'
+             'li.hidden=!ok;if(ok)c++});none.hidden=c>0})})();</script>')
+
 CSS = """
 :root{--bg:#fff8e7;--ink:#4a3420;--sub:#8a6a4a;--ai:#e0670f;--ok:#b54a0c;--line:#f2d79b;--field:#fff;--card:#fff;--sun:#ffe08a;--sunink:#6b4100}
 @media (prefers-color-scheme:dark){:root{--bg:#231b13;--ink:#fbeedd;--sub:#cdb497;--ai:#ffad55;--ok:#ffc56e;--line:#54412c;--field:#2e2419;--card:#2b2117;--sun:#4a3618;--sunink:#ffe3a3}}
@@ -63,6 +75,9 @@ h2::before{content:"☀ "}
 label{display:block;font-weight:700;margin:1rem 0 .3rem}
 input{font:inherit;font-size:1.15rem;width:100%;padding:.65rem 1.1rem;border:2px solid var(--line);border-radius:999px;background:var(--field);color:var(--ink);outline:none}
 input:focus{border-color:var(--ai)}
+.search{background:var(--sun);border-radius:1.5rem;padding:.2rem 1.1rem 1.1rem;margin:1.25rem 0}
+.search label{color:var(--sunink)}
+.none{text-align:center;color:var(--sub);background:var(--card);border:2px dashed var(--line);border-radius:1.25rem;padding:1rem}
 .say{display:flex;align-items:center;gap:.6rem;margin:1.5rem 0 .6rem}
 .say span{background:var(--field);border:2px solid var(--line);border-radius:1rem;padding:.3rem .9rem;font-size:.95rem;font-weight:700}
 dl{display:grid;grid-template-columns:1fr auto;gap:.6rem 1rem;margin:0;padding:1rem 1.25rem;background:var(--sun);border-radius:1.25rem}
@@ -70,6 +85,7 @@ dt{color:var(--sunink)}dd{margin:0;font-weight:700;font-size:1.3rem;color:var(--
 a{color:var(--ai)}
 ul.tools{list-style:none;padding:0;display:grid;gap:.8rem}
 ul.tools li{background:var(--card);border:2px solid var(--line);border-radius:1.25rem;padding:.9rem 1.1rem}
+ul.tools li[hidden]{display:none}
 ul.tools a{font-weight:700;text-decoration:none;font-size:1.1rem}
 ul.tools small{color:var(--sub)}
 .ad{min-height:6rem;border:2px dashed var(--line);border-radius:1.25rem;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:.85rem;margin:2rem 0}
@@ -123,8 +139,13 @@ def main():
         (DIST / t["slug"]).mkdir(exist_ok=True)
         (DIST / t["slug"] / "index.html").write_text(tool_page(t), encoding="utf-8")
         tools.append(t)
-    items = "".join(f"<li><a href='{e(t['slug'])}/'>{e(t['h1'])}</a><br><small>{e(t['description'])}</small></li>" for t in tools)
-    idx = f"{HERO}<h1>{e(site['site_name'])}</h1><p>毎日の「いくら？」「何日？」をすぐ計算。</p><ul class='tools'>{items}</ul>{ad_tag()}"
+    items = "".join(
+        f"<li data-k='{e(' '.join([t['h1'], t['title'], t['description'], t['article'], t['slug']]))}'>"
+        f"<a href='{e(t['slug'])}/'>{e(t['h1'])}</a><br><small>{e(t['description'])}</small></li>" for t in tools)
+    idx = (f"{HERO}<h1>{e(site['site_name'])}</h1><p>毎日の「いくら？」「何日？」をすぐ計算。</p>"
+           f"{SEARCH_BOX}<ul class='tools'>{items}</ul>"
+           f"<p id='none' class='none' hidden>{sun(40)}<br>見つからなかったよ。別のことばでさがしてみてね</p>"
+           f"{SEARCH_JS}{ad_tag()}")
     (DIST / "index.html").write_text(page(site["site_name"], "暮らしの計算ツール集", idx, ""), encoding="utf-8")
     today = datetime.date.today().isoformat()
     base = site["base_url"].rstrip("/")
