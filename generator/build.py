@@ -165,4 +165,91 @@ ul.tools li{background:var(--card);border:2px solid var(--line);border-radius:1.
 ul.tools li[hidden]{display:none}
 ul.tools a{font-weight:700;text-decoration:none;font-size:1.1rem}
 ul.tools small{color:var(--sub)}
-.ad{min-height:6rem;border:2px dashed var(--line);border-radius:1.25rem;display:flex;align-items:cent
+.ad{min-height:6rem;border:2px dashed var(--line);border-radius:1.25rem;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:.85rem;margin:2rem 0}
+.inst{text-align:center;margin:2rem 0 1rem}
+.inst button{font:inherit;font-weight:700;font-size:1rem;background:var(--sun);color:var(--sunink);border:2px solid var(--ai);border-radius:999px;padding:.6rem 1.4rem;cursor:pointer}
+.inst p{text-align:left;font-size:.9rem;color:var(--sub);background:var(--card);border:2px dashed var(--line);border-radius:1rem;padding:.6rem 1rem;margin:.8rem 0 0}
+.count{text-align:center;background:var(--sun);color:var(--sunink);border-radius:999px;padding:.4rem 1rem;font-size:.95rem;margin:1rem 0}
+.count b{color:var(--ok);font-size:1.2rem}
+.back{display:inline-block;background:var(--ai);color:var(--bg);padding:.5rem 1.4rem;border-radius:999px;text-decoration:none;font-weight:700}
+"""
+
+FONTS = ("<link rel='preconnect' href='https://fonts.googleapis.com'>"
+         "<link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>"
+         "<link href='https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap' rel='stylesheet'>")
+
+APP_HEAD = ("<link rel='manifest' href='/manifest.webmanifest'><meta name='theme-color' content='#ffe08a'>"
+            "<link rel='icon' type='image/png' href='/icon-192.png'><link rel='apple-touch-icon' href='/icon-192.png'>")
+
+def page(title, desc, body, path):
+    base = site["base_url"].rstrip("/")
+    url = base + "/" + path
+    return f"""<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(title)}</title>
+<meta name="description" content="{e(desc)}"><link rel="canonical" href="{e(url)}">
+<meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}">
+{APP_HEAD}{FONTS}<style>{CSS}</style></head><body>
+<header><a href="{e(base)}/">{sun(40)}{e(site["site_name"])}</a></header><main>{body}
+{INSTALL}{COUNTER}
+<p><a class="back" href="{e(base)}/">トップへもどる</a></p></main></body></html>"""
+
+def tool_page(t):
+    inputs = "".join(f"<label for='{e(i['id'])}'>{e(i['label'])}</label>"
+                     f"<input id='{e(i['id'])}' type='number' inputmode='decimal' value='{e(i['default'])}'>" for i in t["inputs"])
+    outs = "".join(f"<dt>{e(o['label'])}</dt><dd id='o{n}'>–</dd>" for n, o in enumerate(t["outputs"]))
+    ids = [i["id"] for i in t["inputs"]]
+    fns = ",".join(f"[({','.join(ids)})=>({o['expr']}),{json.dumps(o['unit'])},{int(o.get('digits',0))}]" for o in t["outputs"])
+    js = f"""<script>
+const ids={json.dumps(ids)},F=[{fns}];
+function run(){{const v=ids.map(i=>parseFloat(document.getElementById(i).value)||0);
+F.forEach(([f,u,d],n)=>{{const r=f(...v);document.getElementById("o"+n).textContent=
+Number.isFinite(r)?r.toLocaleString("ja-JP",{{minimumFractionDigits:d,maximumFractionDigits:d}})+" "+u:"–";}});}}
+ids.forEach(i=>document.getElementById(i).addEventListener("input",run));run();</script>"""
+    body = (f"<h1>{e(t['h1'])}</h1><p>{e(t['description'])}</p>"
+            f"<div class='card'>{inputs}<div class='say'>{sun(52)}<span>けいさんできたよ！</span></div><dl>{outs}</dl></div>"
+            f"{ad_tag()}<h2>解説</h2><p>{e(t['article'])}</p>{js}")
+    return page(t["title"], t["description"], body, f"{t['slug']}/")
+
+def main():
+    DIST.mkdir(exist_ok=True)
+    tools = []
+    for f in sorted((ROOT / "tools").glob("*.json")):
+        t = json.loads(f.read_text(encoding="utf-8"))
+        errs = validate(t)
+        if errs:
+            print(f"スキップ {f.name}: {errs}")
+            continue
+        (DIST / t["slug"]).mkdir(exist_ok=True)
+        (DIST / t["slug"] / "index.html").write_text(tool_page(t), encoding="utf-8")
+        tools.append(t)
+    items = "".join(
+        f"<li data-k='{e(' '.join([t['h1'], t['title'], t['description'], t['article'], t['slug']]))}'>"
+        f"<a href='{e(t['slug'])}/'>{e(t['h1'])}</a><br><small>{e(t['description'])}</small></li>" for t in tools)
+    idx = (f"{HERO}<h1>{e(site['site_name'])}</h1><p>毎日の「いくら？」「何日？」をすぐ計算。</p>"
+           f"{SEARCH_BOX}<ul class='tools'>{items}</ul>"
+           f"<p id='none' class='none' hidden>{sun(40)}<br>見つからなかったよ。別のことばでさがしてみてね</p>"
+           f"{SEARCH_JS}{ad_tag()}")
+    (DIST / "index.html").write_text(page(site["site_name"], "暮らしの計算ツール集", idx, ""), encoding="utf-8")
+    (DIST / "manifest.webmanifest").write_text(json.dumps({
+        "name": site["site_name"], "short_name": site["site_name"], "lang": "ja",
+        "start_url": "/", "scope": "/", "display": "standalone",
+        "background_color": "#fff8e7", "theme_color": "#ffe08a",
+        "icons": [{"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"},
+                  {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"}]},
+        ensure_ascii=False), encoding="utf-8")
+    (DIST / "sw.js").write_text(SW_JS, encoding="utf-8")
+    for s in (192, 512):
+        (DIST / f"icon-{s}.png").write_bytes(icon_png(s))
+    today = datetime.date.today().isoformat()
+    base = site["base_url"].rstrip("/")
+    urls = [f"{base}/"] + [f"{base}/{t['slug']}/" for t in tools]
+    (DIST / "sitemap.xml").write_text("<?xml version='1.0' encoding='UTF-8'?><urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>"
+        + "".join(f"<url><loc>{u}</loc><lastmod>{today}</lastmod></url>" for u in urls) + "</urlset>", encoding="utf-8")
+    (DIST / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {base}/sitemap.xml\n", encoding="utf-8")
+    c = site.get("adsense_client", "")
+    if c.startswith("ca-pub-"):
+        (DIST / "ads.txt").write_text(f"google.com, {c.replace('ca-','')}, DIRECT, f08c47fec0942fa0\n", encoding="utf-8")
+    print(f"{len(tools)} ツールを生成しました → dist/")
+
+if __name__ == "__main__":
+    main()
