@@ -1,5 +1,5 @@
 """tools/*.json から静的サイトを dist/ に生成する。依存ライブラリなし。"""
-import json, html, sys, datetime, pathlib
+import json, html, sys, datetime, pathlib, zlib, struct, math
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from validate import validate
 
@@ -16,6 +16,83 @@ def ad_tag():
             f"<ins class='adsbygoogle' style='display:block' data-ad-client='{e(c)}' data-ad-format='auto' data-full-width-responsive='true'></ins>"
             "<script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>")
 
+# ---------- おひさまアイコン（PNG）を作る ----------
+def _png(w, h, rows):
+    raw = b"".join(b"\x00" + bytes(r) for r in rows)
+    def chunk(t, d):
+        c = struct.pack(">I", len(d)) + t + d
+        return c + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b""))
+
+def _seg(px, py, ax, ay, bx, by):
+    dx, dy = bx - ax, by - ay
+    t = max(0, min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+    return math.hypot(px - ax - t * dx, py - ay - t * dy)
+
+def icon_png(size):
+    k = 120 / size
+    rays = [(60 + 44 * math.cos(a), 60 + 44 * math.sin(a), 60 + 54 * math.cos(a), 60 + 54 * math.sin(a))
+            for a in [i * math.pi / 4 for i in range(8)]]
+    pts = [((1 - t) ** 2 * 52 + 2 * (1 - t) * t * 60 + t * t * 68, (1 - t) ** 2 * 70 + 2 * (1 - t) * t * 78 + t * t * 70)
+           for t in [i / 12 for i in range(13)]]
+    smile = [pts[i] + pts[i + 1] for i in range(12)]
+    BG, ORA, YEL, BRN, PNK = (255, 248, 231), (245, 166, 35), (255, 213, 74), (90, 58, 26), (255, 158, 170)
+    rows = []
+    for j in range(size):
+        y = (j + 0.5) * k
+        row = []
+        for i in range(size):
+            x = (i + 0.5) * k
+            col = list(BG)
+            def paint(c, d, op=1.0):
+                a = max(0.0, min(1.0, 0.5 - d / k)) * op
+                if a > 0:
+                    for n in range(3):
+                        col[n] = col[n] * (1 - a) + c[n] * a
+            r = math.hypot(x - 60, y - 60)
+            if r > 40:
+                paint(ORA, min(_seg(x, y, *s) for s in rays) - 3)
+            if r < 39.5:
+                paint(ORA, r - 37.5)
+                paint(YEL, r - 34.5)
+                if 49 < y < 63:
+                    for ex in (48, 72):
+                        paint(BRN, (math.hypot((x - ex) / 3.5, (y - 56) / 5) - 1) * 3.5)
+                if 60 < y < 76:
+                    for bx in (40, 80):
+                        paint(PNK, math.hypot(x - bx, y - 68) - 6, 0.7)
+                if 66 < y < 78 and 48 < x < 72:
+                    paint(BRN, min(_seg(x, y, *s) for s in smile) - 1.5)
+            row += [int(round(v)) for v in col]
+        rows.append(row)
+    return _png(size, size, rows)
+
+SW_JS = ('self.addEventListener("install",function(){self.skipWaiting()});'
+         'self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim())});'
+         'self.addEventListener("fetch",function(e){if(e.request.mode==="navigate"){'
+         'e.respondWith(fetch(e.request).catch(function(){return new Response('
+         '"インターネットにつながっていないみたい。つながったらもう一度開いてね",'
+         '{headers:{"Content-Type":"text/plain; charset=utf-8"}})}))}});')
+
+INSTALL = ('<div class="inst" id="inst" hidden><button id="instb" type="button">☀ ホーム画面・デスクトップに追加</button>'
+           '<p id="insttip" hidden></p></div>'
+           '<script>(function(){'
+           'if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js").catch(function(){})}'
+           'var box=document.getElementById("inst"),btn=document.getElementById("instb"),tip=document.getElementById("insttip"),ev=null;'
+           'if(window.matchMedia("(display-mode: standalone)").matches||navigator.standalone)return;'
+           'box.hidden=false;'
+           'window.addEventListener("beforeinstallprompt",function(x){x.preventDefault();ev=x});'
+           'window.addEventListener("appinstalled",function(){box.hidden=true});'
+           'btn.addEventListener("click",function(){'
+           'if(ev){ev.prompt();ev.userChoice.then(function(r){if(r.outcome==="accepted")box.hidden=true;ev=null});return}'
+           'var ua=navigator.userAgent;'
+           'if(/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&"ontouchend" in document)){'
+           'tip.textContent="画面の共有ボタン（四角に上向き矢印のマーク）をタップして「ホーム画面に追加」を選んでね"}'
+           'else{tip.textContent="ブラウザのメニュー（︙ や …）から「アプリをインストール」または「ホーム画面に追加」を選んでね。パソコンならデスクトップにアイコンができるよ"}'
+           'tip.hidden=false})})();</script>')
+
+# ---------- イラスト ----------
 SUN_BODY = ('<g stroke="#F5A623" stroke-width="6" stroke-linecap="round">'
             '<line x1="104" y1="60" x2="114" y2="60"/><line x1="91.1" y1="91.1" x2="98.2" y2="98.2"/>'
             '<line x1="60" y1="104" x2="60" y2="114"/><line x1="28.9" y1="91.1" x2="21.8" y2="98.2"/>'
@@ -88,75 +165,4 @@ ul.tools li{background:var(--card);border:2px solid var(--line);border-radius:1.
 ul.tools li[hidden]{display:none}
 ul.tools a{font-weight:700;text-decoration:none;font-size:1.1rem}
 ul.tools small{color:var(--sub)}
-.ad{min-height:6rem;border:2px dashed var(--line);border-radius:1.25rem;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:.85rem;margin:2rem 0}
-.count{text-align:center;background:var(--sun);color:var(--sunink);border-radius:999px;padding:.4rem 1rem;font-size:.95rem;margin:2rem 0 1rem}
-.count b{color:var(--ok);font-size:1.2rem}
-.back{display:inline-block;background:var(--ai);color:var(--bg);padding:.5rem 1.4rem;border-radius:999px;text-decoration:none;font-weight:700}
-"""
-
-FONTS = ("<link rel='preconnect' href='https://fonts.googleapis.com'>"
-         "<link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>"
-         "<link href='https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap' rel='stylesheet'>")
-
-def page(title, desc, body, path):
-    base = site["base_url"].rstrip("/")
-    url = base + "/" + path
-    return f"""<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(title)}</title>
-<meta name="description" content="{e(desc)}"><link rel="canonical" href="{e(url)}">
-<meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}">
-{FONTS}<style>{CSS}</style></head><body>
-<header><a href="{e(base)}/">{sun(40)}{e(site["site_name"])}</a></header><main>{body}
-{COUNTER}
-<p><a class="back" href="{e(base)}/">トップへもどる</a></p></main></body></html>"""
-
-def tool_page(t):
-    inputs = "".join(f"<label for='{e(i['id'])}'>{e(i['label'])}</label>"
-                     f"<input id='{e(i['id'])}' type='number' inputmode='decimal' value='{e(i['default'])}'>" for i in t["inputs"])
-    outs = "".join(f"<dt>{e(o['label'])}</dt><dd id='o{n}'>–</dd>" for n, o in enumerate(t["outputs"]))
-    ids = [i["id"] for i in t["inputs"]]
-    fns = ",".join(f"[({','.join(ids)})=>({o['expr']}),{json.dumps(o['unit'])},{int(o.get('digits',0))}]" for o in t["outputs"])
-    js = f"""<script>
-const ids={json.dumps(ids)},F=[{fns}];
-function run(){{const v=ids.map(i=>parseFloat(document.getElementById(i).value)||0);
-F.forEach(([f,u,d],n)=>{{const r=f(...v);document.getElementById("o"+n).textContent=
-Number.isFinite(r)?r.toLocaleString("ja-JP",{{minimumFractionDigits:d,maximumFractionDigits:d}})+" "+u:"–";}});}}
-ids.forEach(i=>document.getElementById(i).addEventListener("input",run));run();</script>"""
-    body = (f"<h1>{e(t['h1'])}</h1><p>{e(t['description'])}</p>"
-            f"<div class='card'>{inputs}<div class='say'>{sun(52)}<span>けいさんできたよ！</span></div><dl>{outs}</dl></div>"
-            f"{ad_tag()}<h2>解説</h2><p>{e(t['article'])}</p>{js}")
-    return page(t["title"], t["description"], body, f"{t['slug']}/")
-
-def main():
-    DIST.mkdir(exist_ok=True)
-    tools = []
-    for f in sorted((ROOT / "tools").glob("*.json")):
-        t = json.loads(f.read_text(encoding="utf-8"))
-        errs = validate(t)
-        if errs:
-            print(f"スキップ {f.name}: {errs}")
-            continue
-        (DIST / t["slug"]).mkdir(exist_ok=True)
-        (DIST / t["slug"] / "index.html").write_text(tool_page(t), encoding="utf-8")
-        tools.append(t)
-    items = "".join(
-        f"<li data-k='{e(' '.join([t['h1'], t['title'], t['description'], t['article'], t['slug']]))}'>"
-        f"<a href='{e(t['slug'])}/'>{e(t['h1'])}</a><br><small>{e(t['description'])}</small></li>" for t in tools)
-    idx = (f"{HERO}<h1>{e(site['site_name'])}</h1><p>毎日の「いくら？」「何日？」をすぐ計算。</p>"
-           f"{SEARCH_BOX}<ul class='tools'>{items}</ul>"
-           f"<p id='none' class='none' hidden>{sun(40)}<br>見つからなかったよ。別のことばでさがしてみてね</p>"
-           f"{SEARCH_JS}{ad_tag()}")
-    (DIST / "index.html").write_text(page(site["site_name"], "暮らしの計算ツール集", idx, ""), encoding="utf-8")
-    today = datetime.date.today().isoformat()
-    base = site["base_url"].rstrip("/")
-    urls = [f"{base}/"] + [f"{base}/{t['slug']}/" for t in tools]
-    (DIST / "sitemap.xml").write_text("<?xml version='1.0' encoding='UTF-8'?><urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>"
-        + "".join(f"<url><loc>{u}</loc><lastmod>{today}</lastmod></url>" for u in urls) + "</urlset>", encoding="utf-8")
-    (DIST / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {base}/sitemap.xml\n", encoding="utf-8")
-    c = site.get("adsense_client", "")
-    if c.startswith("ca-pub-"):
-        (DIST / "ads.txt").write_text(f"google.com, {c.replace('ca-','')}, DIRECT, f08c47fec0942fa0\n", encoding="utf-8")
-    print(f"{len(tools)} ツールを生成しました → dist/")
-
-if __name__ == "__main__":
-    main()
+.ad{min-height:6rem;border:2px dashed var(--line);border-radius:1.25rem;display:flex;align-items:cent
