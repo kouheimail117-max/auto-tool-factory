@@ -1,0 +1,44 @@
+{
+  "slug": "nenpi-keisan",
+  "title": "燃費計算機｜走行距離と給油量から実燃費がわかる",
+  "h1": "その車の燃費は何km/L？実燃費計算",
+  "description": "走行距離と給油量を入力するだけで、実際の燃費（km/L）と1kmあたりのガソリン代がわかります。",
+  "inputs": [
+    {
+      "id": "soukou_kyori",
+      "label": "走行距離（km）",
+      "default": 400
+    },
+    {
+      "id": "kyuyu_ryou",
+      "label": "給油量（L）",
+      "default": 30
+    },
+    {
+      "id": "gasoline_price",
+      "label": "ガソリン価格（円/L）",
+      "default": 170
+    }
+  ],
+  "outputs": [
+    {
+      "label": "実燃費",
+      "expr": "soukou_kyori / kyuyu_ryou",
+      "unit": "km/L",
+      "digits": 2
+    },
+    {
+      "label": "1kmあたりのガソリン代",
+      "expr": "gasoline_price * kyuyu_ryou / soukou_kyori",
+      "unit": "円/km",
+      "digits": 2
+    },
+    {
+      "label": "100kmあたりのガソリン代",
+      "expr": "gasoline_price * kyuyu_ryou / soukou_kyori * 100",
+      "unit": "円",
+      "digits": 0
+    }
+  ],
+  "article": "実燃費は「走行距離÷給油量」という割り算で求められます。カタログ燃費と違い、実際の運転状況を反映した数値がわかるのが特徴です。例えば前回の給油から400km走行し、今回30L給油した場合、実燃費は約13.3km/Lとなります。ガソリン価格を170円/Lとすると、1kmあたりの燃料コストは約12.75円、100km走るごとに約1275円かかる計算です。複数回の給油データで実燃費を比較すれば、運転の仕方や季節による燃費の変化にも気づけます。車の買い替えや燃費の良い運転を意識するきっかけとしても役立つ計算ツールです。"
+}
