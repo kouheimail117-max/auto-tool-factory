@@ -1,0 +1,43 @@
+{
+  "slug": "chuusha-ryoukin-keisan",
+  "title": "駐車料金計算機｜時間制料金から支払い額がわかる",
+  "h1": "その駐車時間、料金はいくら？時間制駐車場料金計算",
+  "description": "駐車時間と単位料金、上限料金を入力するだけで、時間制駐車場の支払い額の目安がわかります。",
+  "inputs": [
+    {
+      "id": "chusha_jikan",
+      "label": "駐車時間（分）",
+      "default": 180
+    },
+    {
+      "id": "tanni_jikan",
+      "label": "料金単位時間（分）",
+      "default": 30
+    },
+    {
+      "id": "tanni_ryoukin",
+      "label": "単位料金（円）",
+      "default": 200
+    },
+    {
+      "id": "joggen_ryoukin",
+      "label": "上限料金（円、なければ大きな数）",
+      "default": 1500
+    }
+  ],
+  "outputs": [
+    {
+      "label": "駐車料金",
+      "expr": "Math.min(Math.ceil(chusha_jikan / tanni_jikan) * tanni_ryoukin, joggen_ryoukin)",
+      "unit": "円",
+      "digits": 0
+    },
+    {
+      "label": "1分あたりの単価",
+      "expr": "tanni_ryoukin / tanni_jikan",
+      "unit": "円/分",
+      "digits": 1
+    }
+  ],
+  "article": "時間制駐車場の料金は「駐車時間を単位時間で切り上げて単位料金をかけ、上限料金と比較して低い方を採用する」という計算で求められます。例えば単位料金が30分200円、上限料金が1500円の駐車場に3時間（180分）停めた場合、180分÷30分＝6単位となり、6×200円＝1200円が上限1500円を下回るため、支払い額は1200円になります。長時間駐車すると上限料金が適用されて割安になるケースも多いため、事前に計算しておくと駐車場選びやお出かけの予算計画に役立ちます。"
+}
