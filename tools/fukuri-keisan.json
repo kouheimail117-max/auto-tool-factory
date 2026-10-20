@@ -1,0 +1,43 @@
+{
+  "slug": "fukuri-keisan",
+  "title": "複利計算機｜積立や貯金が将来いくらになるか計算",
+  "h1": "その貯金、複利で増やすと将来いくら？複利計算機",
+  "description": "元金・年利率・運用年数・複利回数を入力するだけで、将来の資産額と増えた利息がいくらになるかがわかります。",
+  "inputs": [
+    {
+      "id": "gankin",
+      "label": "元金（円）",
+      "default": 100000
+    },
+    {
+      "id": "nenri",
+      "label": "年利率（%）",
+      "default": 3
+    },
+    {
+      "id": "nensuu",
+      "label": "運用年数（年）",
+      "default": 10
+    },
+    {
+      "id": "fukuri_kaisuu",
+      "label": "年間の複利回数（回）",
+      "default": 1
+    }
+  ],
+  "outputs": [
+    {
+      "label": "将来の金額",
+      "expr": "gankin * Math.pow(1 + (nenri / 100) / fukuri_kaisuu, fukuri_kaisuu * nensuu)",
+      "unit": "円",
+      "digits": 0
+    },
+    {
+      "label": "増えた利息",
+      "expr": "gankin * Math.pow(1 + (nenri / 100) / fukuri_kaisuu, fukuri_kaisuu * nensuu) - gankin",
+      "unit": "円",
+      "digits": 0
+    }
+  ],
+  "article": "複利計算は「将来の金額＝元金×（1＋年利率÷複利回数）の（複利回数×年数）乗」という式で求められます。単利と違い、利息にもさらに利息がつくため、期間が長いほど資産の増え方が加速するのが特徴です。例えば元金10万円を年利3%、1年に1回の複利で10年間運用すると、将来の金額は約13万4千円、利息は約3万4千円になります。複利回数を増やす（例えば月複利にする）とさらに増え方が大きくなります。長期の積立投資や定期預金の将来価値をイメージする際に役立つ計算ツールです。"
+}
