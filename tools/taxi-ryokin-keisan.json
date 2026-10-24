@@ -1,0 +1,48 @@
+{
+  "slug": "taxi-ryokin-keisan",
+  "title": "タクシー料金計算機｜距離からおおよその料金がわかる",
+  "h1": "そのタクシー、料金はいくら？距離から計算",
+  "description": "走行距離と基本運賃・加算運賃の条件を入力するだけで、タクシー料金の目安がすぐにわかります。",
+  "inputs": [
+    {
+      "id": "kyori",
+      "label": "走行距離（km）",
+      "default": 5
+    },
+    {
+      "id": "kihon_ryokin",
+      "label": "基本運賃（円）",
+      "default": 500
+    },
+    {
+      "id": "kihon_kyori",
+      "label": "基本距離（km）",
+      "default": 1.1
+    },
+    {
+      "id": "kahan_kyori",
+      "label": "加算距離単位（km）",
+      "default": 0.255
+    },
+    {
+      "id": "kahan_ryokin",
+      "label": "加算運賃（円）",
+      "default": 100
+    }
+  ],
+  "outputs": [
+    {
+      "label": "料金の目安",
+      "expr": "kihon_ryokin + Math.ceil(Math.max(0, kyori - kihon_kyori) / kahan_kyori) * kahan_ryokin",
+      "unit": "円",
+      "digits": 0
+    },
+    {
+      "label": "加算運賃の発生回数",
+      "expr": "Math.ceil(Math.max(0, kyori - kihon_kyori) / kahan_kyori)",
+      "unit": "回",
+      "digits": 0
+    }
+  ],
+  "article": "タクシー料金は「基本運賃＋加算運賃×加算回数」で計算できます。多くのタクシーでは、最初の基本距離までは固定の基本運賃がかかり、それを超えた距離は一定区間ごとに加算運賃が加わります。例えば基本運賃500円（最初の1.1km）、以降255mごとに100円加算される設定で5km乗車した場合、超過距離3.9kmを255mごとに区切ると約16回分の加算が発生し、合計で2100円程度になります。地域や会社によって基本距離や加算額は異なるため、利用するタクシー会社の料金表に合わせて数値を入力すれば、乗車前におおよその料金を把握でき、予算の見積もりに役立ちます。"
+}
